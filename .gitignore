@@ -1,0 +1,11 @@
+node_modules/
+dist/
+logs/*.log
+logs/*.jsonl
+logs/*.txt
+backups/*
+!logs/.gitkeep
+!backups/.gitkeep
+state/
+*.tmp
+.DS_Store

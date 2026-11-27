@@ -1,0 +1,27 @@
+{
+  "name": "ubuntu-fileserver",
+  "version": "1.0.0",
+  "description": "Ubuntu Server 24.04 Samba + Active Directory + LVM Automation TUI",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.tsx",
+    "start": "bun run src/index.tsx",
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run typecheck && bun test",
+    "build": "bun run scripts/build.ts",
+    "build:x64": "bun run scripts/build.ts --target=bun-linux-x64",
+    "build:arm64": "bun run scripts/build.ts --target=bun-linux-arm64"
+  },
+  "dependencies": {
+    "ink": "^5.1.0",
+    "pino": "^9.6.0",
+    "react": "^18.3.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3"
+  }
+}
