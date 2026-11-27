@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { StageSidebar } from './StageSidebar.js';
 import { useTerminalSize } from './useTerminalSize.js';
+import { REQUIRED_PACKAGES } from '../modules/packageManager.js';
 import { getNextIncompleteStage, hasResumableProgress } from '../state/installationState.js';
 import { STAGE_LABELS } from '../state/persistence.js';
 import type { InstallationState } from '../types/index.js';
@@ -34,7 +35,7 @@ const MENU_ITEMS: Array<{ id: MainMenuChoice; label: string; description: string
   {
     id: 'check_packages',
     label: '3. Check installed package status',
-    description: 'Read-only check of all 15 mandatory packages via dpkg-query',
+    description: `Read-only check of all ${REQUIRED_PACKAGES.length} mandatory packages via dpkg-query`,
   },
   {
     id: 'resume',

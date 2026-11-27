@@ -278,6 +278,7 @@ export interface SambaShareConfig {
   baseMountPoint: string;
   sharePath: string;
   accessMode: ShareAccessMode;
+  trashEnabled?: boolean;
   readOnlyGroups: ResolvedAdIdentity[];
   readWriteGroups: ResolvedAdIdentity[];
   readOnlyUsers: ResolvedAdIdentity[];

@@ -8,7 +8,7 @@ A modular, interactive Terminal User Interface (TUI) application written in **Ty
 
 - **Main Menu & Stage Tracker**: 6-option keyboard-navigable TUI displaying live `COMPLETED` / `IN PROGRESS` / `PENDING` / `FAILED` stage statuses.
 - **Two Package Installation Modes**:
-  - **Mode A (Automatic)**: Inspects all 15 mandatory packages (`samba`, `samba-common-bin`, `winbind`, `libnss-winbind`, `libpam-winbind`, `krb5-user`, `realmd`, `adcli`, `lvm2`, `xfsprogs`, `acl`, `dnsutils`, `chrony`, `smbclient`, `ldap-utils`), installs only missing packages, verifies via `dpkg-query`, and allows unlimited retries on failure.
+  - **Mode A (Automatic)**: Inspects all 19 mandatory packages (`samba`, `samba-common-bin`, `samba-vfs-modules`, `winbind`, `libnss-winbind`, `libpam-winbind`, `krb5-user`, `realmd`, `adcli`, `lvm2`, `xfsprogs`, `acl`, `dnsutils`, `chrony`, `smbclient`, `ldap-utils`, `tree`, `telnet`, `plocate`), installs only missing packages, verifies via `dpkg-query`, and allows unlimited retries on failure.
   - **Mode B (Preinstall)**: Dedicated preinstallation screen with prerequisite checks (`root`, `APT`, internet/mirror reachability), confirmation prompt, progress bar, and verification.
 - **Centralized Zod Validation & Unlimited Retry**: Never exits on invalid inputs; explains rejection reasons inline, preserves valid entered fields, and offers `Retry`, `Back`, and `Exit` controls on failures.
 - **Ubuntu Hostname Configuration**: Validates Linux RFC 1123 hostname rules, backs up `/etc/hostname` and `/etc/hosts`, configures `hostnamectl` and `/etc/hosts`, and verifies name resolution.
@@ -23,8 +23,9 @@ A modular, interactive Terminal User Interface (TUI) application written in **Ty
 - **XFS & UUID Mount Configuration**:
   - Refuses to format an LV if an existing filesystem is detected.
   - Formats with `mkfs.xfs`, verifies UUID, backs up `/etc/fstab`, adds a `UUID=...` entry, mounts, and verifies with `findmnt` and `df -h`.
-- **Samba Shares & POSIX ACL Consistency**:
+- **Samba Shares, Trash (Recycle Bin) & POSIX ACL Consistency**:
   - Allows shares exclusively under configured LVM mount points (never arbitrary paths), prevents duplicate share names, and validates every AD user and group via `wbinfo --name-to-sid` and `getent` before acceptance.
+  - Supports per-share Samba Trash (`vfs_recycle` paired with `acl_xattr`, per-user `.recycle/%U`, `2770` directories, versioned copies, temp-file exclusions) toggleable for `read_write` shares.
   - Applies `chown`, `chmod 2770` (setgid), `setfacl -b`, and matching current + default POSIX ACLs (`o::---`), prevents conflicting RO/RW assignments, runs `testparm -s` before reloading Samba, and restores backup on `testparm` failure.
 - **Backup, State Persistence, Resume & Structured Logging**:
   - Timestamped backups stored in `backups/` with `manifest.json` rollback support.
@@ -172,8 +173,8 @@ Optional non-interactive utility flags:
    - Provide one LVM base name (e.g. `fileserver`), inspect generated `vg_fileserver` / `lv_fileserver`, and type `WIPE` to authorize `pvcreate`, `vgcreate`, and `lvcreate -l 100%FREE`.
 5. **XFS & Mount Configuration**:
    - Formats the new LV with `mkfs.xfs` (refuses to overwrite existing filesystems), adds a `UUID=...` entry to `/etc/fstab`, mounts, and verifies via `findmnt` and `df -h`.
-6. **Samba Share & ACL Creation**:
-   - Select a configured LVM mount point (and optional subfolder), enter share details, add validated AD groups/users (verified live via `wbinfo --name-to-sid` and `getent`), apply `chown`/`chmod 2770`/`setfacl`, validate with `testparm -s`, and reload `smbd`.
+6. **Samba Share, Trash & ACL Creation**:
+   - Select a configured LVM mount point (and optional subfolder), enter share details, keep or toggle Trash (Recycle Bin) for `read_write` shares, add validated AD groups/users (verified live via `wbinfo --name-to-sid` and `getent`), apply `chown`/`chmod 2770`/`setfacl`, validate with `testparm -s`, and reload `smbd`.
 7. **Resuming an Interrupted Installation**:
    - Select **4. Resume previous configuration** from the Main Menu. The application revalidates live system state against `state/installation-state.json` before skipping completed stages and jumps directly to the next incomplete stage.
 

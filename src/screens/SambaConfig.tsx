@@ -83,6 +83,7 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
   const [description, setDescription] = useState('');
   const [subfolder, setSubfolder] = useState('');
   const [accessMode, setAccessMode] = useState<ShareAccessMode>('read_write');
+  const [trashEnabled, setTrashEnabled] = useState<boolean>(true);
   const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
   const [detailErrorSummary, setDetailErrorSummary] = useState<string | undefined>();
 
@@ -131,6 +132,7 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
     setDescription('');
     setSubfolder('');
     setAccessMode('read_write');
+    setTrashEnabled(true);
     setDetailErrors({});
     setDetailErrorSummary(undefined);
     setBucket('rw_group');
@@ -291,6 +293,7 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
       baseMountPoint: selectedBaseMount,
       sharePath: resolvedPath,
       accessMode,
+      trashEnabled: accessMode === 'read_write' ? trashEnabled : false,
       readOnlyGroups: roGroups,
       readWriteGroups: accessMode === 'read_write' ? rwGroups : [],
       readOnlyUsers: roUsers,
@@ -359,23 +362,40 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
     }
 
     if (phase === 'wizard_details') {
+      const maxFocus = accessMode === 'read_write' ? 5 : 4;
       if (key.escape) {
         setPhase('wizard_mount');
         return;
       }
+      if (key.ctrl && input.toLowerCase() === 't' && accessMode === 'read_write') {
+        setTrashEnabled((prev) => !prev);
+        return;
+      }
       if (key.upArrow || (key.tab && key.shift)) {
-        setDetailFocus((prev) => (prev - 1 + 4) % 4);
+        setDetailFocus((prev) => (prev - 1 + maxFocus) % maxFocus);
         return;
       }
       if (key.downArrow || key.tab) {
-        setDetailFocus((prev) => (prev + 1) % 4);
+        setDetailFocus((prev) => (prev + 1) % maxFocus);
         return;
       }
       if (detailFocus === 3 && (input === ' ' || key.leftArrow || key.rightArrow)) {
         setAccessMode((prev) => (prev === 'read_write' ? 'read_only' : 'read_write'));
         return;
       }
+      if (detailFocus === 4 && accessMode === 'read_write' && (input === ' ' || key.leftArrow || key.rightArrow)) {
+        setTrashEnabled((prev) => !prev);
+        return;
+      }
       if (detailFocus === 3 && key.return) {
+        if (accessMode === 'read_write') {
+          setDetailFocus(4);
+        } else {
+          validateShareDetailsAndAdvance();
+        }
+        return;
+      }
+      if (detailFocus === 4 && key.return) {
         validateShareDetailsAndAdvance();
       }
       return;
@@ -616,6 +636,33 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
                 {' '}Read Only{' '}
               </Text>
             </Box>
+            <Box marginTop={1} height={1}>
+              <Text bold color={detailFocus === 4 ? 'cyan' : 'white'}>
+                {detailFocus === 4 ? '▸ ' : '  '}
+                {'Trash (Recycle Bin):'.padEnd(22, ' ')}
+              </Text>
+              {accessMode === 'read_only' ? (
+                <Text dimColor>Disabled (Read-Only share)</Text>
+              ) : (
+                <>
+                  <Text
+                    bold
+                    color={trashEnabled ? 'black' : 'gray'}
+                    backgroundColor={trashEnabled ? 'green' : undefined}
+                  >
+                    {' '}Enabled (.recycle/%U){' '}
+                  </Text>
+                  <Text>  </Text>
+                  <Text
+                    bold
+                    color={!trashEnabled ? 'black' : 'gray'}
+                    backgroundColor={!trashEnabled ? 'red' : undefined}
+                  >
+                    {' '}Disabled{' '}
+                  </Text>
+                </>
+              )}
+            </Box>
             <Box height={1} marginTop={1}>
               <Text color={detailErrorSummary ? 'red' : 'gray'}>
                 {detailErrorSummary ? `✖ ${detailErrorSummary}` : ' '}
@@ -770,7 +817,8 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
                       color={absIdx === listCursor ? 'black' : 'white'}
                       bold={absIdx === listCursor}
                     >
-                      {absIdx === listCursor ? ' ▸ ' : '   '}[{s.name}] {s.sharePath} ({s.accessMode}) — RW Grps:{' '}
+                      {absIdx === listCursor ? ' ▸ ' : '   '}[{s.name}] {s.sharePath} ({s.accessMode},{' '}
+                      {(s.trashEnabled ?? true) && s.accessMode === 'read_write' ? 'Trash:ON' : 'Trash:OFF'}) — RW Grps:{' '}
                       {s.readWriteGroups.length}, RO Grps: {s.readOnlyGroups.length}, Users:{' '}
                       {s.readWriteUsers.length + s.readOnlyUsers.length}
                     </Text>
@@ -817,7 +865,7 @@ export const SambaConfig: React.FC<SambaConfigProps> = ({
           <Text dimColor>[↑/↓] Select  •  [Enter] Next  •  [Esc] {shares.length > 0 ? 'Share List' : 'Main Menu'}</Text>
         )}
         {phase === 'wizard_details' && (
-          <Text dimColor>[↑/↓/Tab] Navigate  •  [Space] Toggle RW/RO  •  [Enter on Access Mode] Next  •  [Esc] Back</Text>
+          <Text dimColor>[↑/↓/Tab] Navigate  •  [Space] Toggle Option  •  [Ctrl+T] Trash  •  [Enter] Next  •  [Esc] Back</Text>
         )}
         {phase === 'wizard_identities' && (
           <Text dimColor>

@@ -64,8 +64,24 @@ export function buildSambaShareStanza(share: SambaShareConfig): string {
     '   force directory mode = 2770',
     '   inherit acls = yes',
     '   inherit permissions = yes',
-    '',
   );
+
+  const trashActive = (share.trashEnabled ?? true) && share.accessMode === 'read_write';
+  if (trashActive) {
+    lines.push(
+      '   vfs objects = recycle acl_xattr',
+      '   recycle:repository = .recycle/%U',
+      '   recycle:keeptree = yes',
+      '   recycle:versions = yes',
+      '   recycle:touch = yes',
+      '   recycle:directory_mode = 2770',
+      '   recycle:subdir_mode = 2770',
+      '   recycle:exclude = *.tmp,*.temp,~$*',
+      '   recycle:exclude_dir = .recycle',
+    );
+  }
+
+  lines.push('');
 
   return lines.join('\n');
 }

@@ -386,12 +386,14 @@ describe('Ink TUI Components and Screens', () => {
     await new Promise((r) => setTimeout(r, 30));
     // Select mount point '/data/fileserver'
     await streams.sendKey('\r');
-    // Share details: name, description, skip subfolder, enter on access mode
+    // Share details: name, description, skip subfolder, access mode, trash (default ON)
     await streams.sendKey('finance');
     await streams.sendKey('\r');
     await streams.sendKey('Finance Department');
     await streams.sendKey('\r');
     await streams.sendKey('\r');
+    await streams.sendKey('\r');
+    expect(streams.getOutput()).toContain('Trash (Recycle Bin)');
     await streams.sendKey('\r');
 
     // Now on AD identity builder: enter invalid group
@@ -447,7 +449,7 @@ describe('Ink TUI Components and Screens', () => {
     // Must settle in review phase (not stuck in infinite loading loop!)
     const reviewOut = streams.getOutput();
     expect(reviewOut).toContain('Mode B: Preinstall Required Packages');
-    expect(reviewOut).toContain('2/15 installed');
+    expect(reviewOut).toContain('2/19 installed');
     expect(reviewOut).toContain('Press [Enter] or [I] to install missing packages');
 
     // Press Enter -> Confirmation -> Y -> Installs missing packages -> Success
@@ -591,6 +593,8 @@ describe('Ink TUI Components and Screens', () => {
     await streams.sendKey('Project Share');
     await streams.sendKey('\r');
     await streams.sendKey('\r');
+    await streams.sendKey('\r');
+    // Trash (Recycle Bin): accept default ON -> advance to AD identity builder
     await streams.sendKey('\r');
 
     // Type partial group 'fin' and check live suggestions appear!

@@ -196,11 +196,12 @@ export class VerificationManager {
       const dirOk = await this.fs.isDirectory(share.sharePath);
       const aclRes = await this.executor.run({ command: 'getfacl', args: ['-p', share.sharePath] });
       const hasOtherNone = aclRes.stdout.includes('other::---');
+      const trashLabel = (share.trashEnabled ?? true) && share.accessMode === 'read_write' ? 'trash=on' : 'trash=off';
       checks.push({
         category: 'Samba',
         name: `Share [${share.name}] Path & ACLs`,
         passed: dirOk && aclRes.exitCode === 0 && hasOtherNone,
-        detail: dirOk ? `${share.sharePath} (${share.accessMode}, other::---=${hasOtherNone})` : `Directory missing: ${share.sharePath}`,
+        detail: dirOk ? `${share.sharePath} (${share.accessMode}, ${trashLabel}, other::---=${hasOtherNone})` : `Directory missing: ${share.sharePath}`,
       });
     }
 

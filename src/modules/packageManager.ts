@@ -12,6 +12,7 @@ import type {
 export const REQUIRED_PACKAGES: RequiredPackageSpec[] = [
   { name: 'samba', description: 'SMB/CIFS file, print, and login server', mandatory: true },
   { name: 'samba-common-bin', description: 'Samba common files used by server and client', mandatory: true },
+  { name: 'samba-vfs-modules', description: 'Samba VFS plugins (acl_xattr, recycle trash)', mandatory: true },
   { name: 'winbind', description: 'Active Directory NSS/PAM/IDMAP daemon', mandatory: true },
   { name: 'libnss-winbind', description: 'Name Service Switch plugin for Winbind', mandatory: true },
   { name: 'libpam-winbind', description: 'Pluggable Authentication Module for Winbind', mandatory: true },
@@ -25,6 +26,9 @@ export const REQUIRED_PACKAGES: RequiredPackageSpec[] = [
   { name: 'chrony', description: 'NTP time synchronization daemon for Kerberos', mandatory: true },
   { name: 'smbclient', description: 'Command-line SMB/CIFS client for testing', mandatory: true },
   { name: 'ldap-utils', description: 'OpenLDAP utilities for directory queries', mandatory: true },
+  { name: 'tree', description: 'Recursive directory listing utility', mandatory: true },
+  { name: 'telnet', description: 'TCP port connectivity and diagnostic client', mandatory: true },
+  { name: 'plocate', description: 'Fast filesystem index and file locator', mandatory: true },
 ];
 
 export class PackageManager {

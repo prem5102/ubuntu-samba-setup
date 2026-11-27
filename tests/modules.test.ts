@@ -11,7 +11,7 @@ import { buildLvmPlan, LvmManager } from '../src/modules/lvm.js';
 import { MountManager } from '../src/modules/mount.js';
 import { PackageManager, REQUIRED_PACKAGES } from '../src/modules/packageManager.js';
 import { PermissionsManager, validateShareAclConsistency } from '../src/modules/permissions.js';
-import { SambaManager } from '../src/modules/samba.js';
+import { buildSambaShareStanza, SambaManager } from '../src/modules/samba.js';
 import { VerificationManager } from '../src/modules/verification.js';
 import { createInitialInstallationState } from '../src/state/persistence.js';
 import type { SambaShareConfig } from '../src/types/index.js';
@@ -411,6 +411,12 @@ describe('Core Modules Integration', () => {
     expect(applyRes.testparmPassed).toBe(true);
     const smbText = await mfs.readText('/etc/samba/smb.conf');
     expect(smbText).toContain('[finance]');
+    expect(smbText).toContain('vfs objects = recycle acl_xattr');
+    expect(smbText).toContain('recycle:repository = .recycle/%U');
+    expect(smbText).toContain('recycle:keeptree = yes');
+    expect(smbText).toContain('recycle:versions = yes');
+    expect(smbText).toContain('recycle:directory_mode = 2770');
+    expect(smbText).toContain('recycle:exclude_dir = .recycle');
     expect(smbText).toContain('write list = "@CORP\\finance_rw"');
     expect(smbText).toContain('read list = "@CORP\\auditors_ro", "CORP\\alice"');
 
@@ -454,6 +460,7 @@ describe('Core Modules Integration', () => {
     const report = await verMgr.runFullVerification(state);
     expect(report.overallPassed).toBe(true);
     expect(report.summaryText).toContain('[PASS]');
+    expect(report.summaryText).toContain('trash=on');
 
     // Test live AD identity listing & suggestion filtering
     const listedGroups = await idVal.listAvailableIdentities('group');
@@ -467,5 +474,42 @@ describe('Core Modules Integration', () => {
       ['PROJECT\\finance_rw'],
     );
     expect(suggestions).toEqual(['PROJECT\\finance_ro']);
+  });
+
+  test('buildSambaShareStanza toggles vfs_recycle trash cleanly alongside acl_xattr', () => {
+    const staffGroup = {
+      input: 'staff',
+      normalized: 'CORP\\staff',
+      kind: 'group' as const,
+      sid: 'S-1-5-21-100-513',
+      numericId: 10513,
+    };
+    const baseShare: SambaShareConfig = {
+      name: 'docs',
+      description: 'Docs Share',
+      baseMountPoint: '/data/fileserver',
+      sharePath: '/data/fileserver/docs',
+      accessMode: 'read_write',
+      trashEnabled: true,
+      readWriteGroups: [staffGroup],
+      readWriteUsers: [],
+      readOnlyGroups: [],
+      readOnlyUsers: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    const withTrash = buildSambaShareStanza(baseShare);
+    expect(withTrash).toContain('vfs objects = recycle acl_xattr');
+    expect(withTrash).toContain('recycle:repository = .recycle/%U');
+    expect(withTrash).toContain('recycle:touch = yes');
+
+    const withoutTrash = buildSambaShareStanza({ ...baseShare, trashEnabled: false });
+    expect(withoutTrash).not.toContain('vfs objects = recycle');
+    expect(withoutTrash).not.toContain('recycle:repository');
+
+    const readOnlyShare = buildSambaShareStanza({ ...baseShare, accessMode: 'read_only', trashEnabled: true });
+    expect(readOnlyShare).toContain('read only = yes');
+    expect(readOnlyShare).not.toContain('vfs objects = recycle');
+    expect(readOnlyShare).not.toContain('recycle:repository');
   });
 });
